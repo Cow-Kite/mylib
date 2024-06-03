@@ -260,7 +260,7 @@ def submit_all_jobs(args, udf_command, dry_run=False):
         cmd += f" --dataset={args.dataset}"
         cmd += f" --num_nodes={args.num_nodes}"
         cmd += f" --node_rank={i}"
-        cmd += f" --master_addr={master_ip}"
+        cmd += f" --master_addr={master_ip})"
         servers_cmd.append(cmd)
 
         if not dry_run:
@@ -298,6 +298,7 @@ def submit_all_jobs(args, udf_command, dry_run=False):
         print("Task failed")
         sys.exit(-1)
     print("=== fully done ! === ")
+
 
 def main():
     parser = argparse.ArgumentParser(description="Launch a distributed job")
@@ -350,7 +351,7 @@ def main():
         "--master_addr",
         type=str,
         default='localhost',
-        help="The master address"
+        help="The master address",
     )
     parser.add_argument(
         "--ip_config",
