@@ -5,7 +5,7 @@ from multiprocessing import Process
 from distributed import LocalGraphStore
 from distributed import LocalFeatureStore
 
-##
+## 왜 커밋안돼?
 def process_data(node_rank, dataset, dataset_root_dir):
     print(f'--- Process {node_rank}: Loading data partition files ...')
     root_dir = osp.join(osp.dirname(osp.realpath(__file__)), dataset_root_dir)
