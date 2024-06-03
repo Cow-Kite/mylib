@@ -1,9 +1,11 @@
 import sys
 import os.path as osp
 import torch
-from multiprocessing import Process
+from multiprocessing import Process, Queue
+from distributed import DistContext
 from distributed import LocalGraphStore
 from distributed import LocalFeatureStore
+from distributed import DistNeighborSampler
 
 def process_data(node_rank, dataset, dataset_root_dir):
     print(f'--- Process {node_rank}: Loading data partition files ...')
@@ -35,6 +37,18 @@ def process_data(node_rank, dataset, dataset_root_dir):
 
     print(f'Partition metadata (node_rank {node_rank}): {graph.meta}')
 
+    current_ctx = DistContext()
+    num_neighbors = [10, 5]
+    sampler = DistNeighborSampler(
+        current_ctx=current_ctx,
+        data=partition_data,
+        num_neighbors=num_neighbors,
+        channel=queue,
+        device=torch.device('cpu')
+    )
+    sampler.init_sampler_instance()
+
+    
 def main():
     dataset = 'ogbn-products'
     dataset_root_dir = './data/partitions/ogbn-products/2-parts'

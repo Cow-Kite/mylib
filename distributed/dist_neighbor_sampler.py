@@ -98,18 +98,6 @@ class DistNeighborSampler:
         self.node_time = self._sampler.node_time
         self.edge_time = self._sampler.edge_time
 
-    def register_sampler_rpc(self) -> None:
-        partition2workers = rpc_partition_to_workers(
-            current_ctx=self.current_ctx,
-            num_partitions=self.graph_store.num_partitions,
-            current_partition_idx=self.graph_store.partition_idx,
-        )
-        self.rpc_router = RPCRouter(partition2workers)
-        self.feature_store.set_rpc_router(self.rpc_router)
-
-        rpc_sample_callee = RPCSamplingCallee(self)
-        self.rpc_sample_callee_id = rpc_register(rpc_sample_callee)
-
     def init_event_loop(self) -> None:
         if self.event_loop is None:
             self.event_loop = ConcurrentEventLoop(self.concurrency)
@@ -888,15 +876,6 @@ class DistNeighborSampler:
                     p_outputs.pop(p_id)
                     p_outputs.insert(p_id, p_nbr_out)
 
-                else:  # Sample on a remote machine:
-                    local_only = False
-                    to_worker = self.rpc_router.get_to_worker(p_id)
-                    futs.append(
-                        rpc_async(
-                            to_worker,
-                            self.rpc_sample_callee_id,
-                            args=(p_srcs, one_hop_num, p_seed_time, edge_type),
-                        ))
 
         if not local_only:
             # Src nodes are remote
