@@ -2,7 +2,7 @@
 # 주로 머신 러닝 작업을 여러 노드에서 병렬로 실행하는 데 사용됨
 # 이 스크립트는 몇 가지 환경 변수를 설정하고, launch.py를 실행하며, 실행 중인 작업을 중지할 수 있도록 신호 처리를 설정함
 PYG_WORKSPACE=$PWD # 현재 작업 디렉토리 지정
-USER=sykang # SSH 접속 시 사용할 사용자 이름 설정
+USER="sykang" # SSH 접속 시 사용할 사용자 이름 설정
 PY_EXEC="python3" # Python 실행 파일 지정
 EXEC_SCRIPT="${PYG_WORKSPACE}/test.py" # 실행할 Python 스크립트 경로 설정
 CMD="cd ${PYG_WORKSPACE}; ${PY_EXEC} ${EXEC_SCRIPT}" # 작업 디렉토리로 이동한 후, Python 스크립트를 실행

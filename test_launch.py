@@ -304,14 +304,29 @@ def main():
     parser.add_argument(
         "--ssh_port",
         type=int,
-        default=22,
+        default=10022,
         help="SSH port",
+    )
+    parser.add_argument(
+        "--ssh_username",
+        type=str,
+        default="",
+        help=("When issuing commands (via ssh) to the cluster, use the "
+              "provided username in the ssh cmd. For example, if you provide "
+              "--ssh_username=bob, then the ssh command will be like "
+              "'ssh bob@1.2.3.4 CMD'"),
     )
     parser.add_argument(
         "--workspace",
         type=str,
         required=True,
         help="Path of user directory of distributed tasks",
+    )
+    parser.add_argument(
+        "--dataset",
+        type=str,
+        default="ogbn-products",
+        help="The name of the dataset",
     )
     parser.add_argument(
         "--dataset_root_dir",
@@ -343,10 +358,19 @@ def main():
         type=str,
         help="File (in workspace) of IP configuration for server processes",
     )
+    parser.add_argument(
+        "--extra_envs",
+        nargs="+",
+        type=str,
+        default=[],
+        help=("Extra environment parameters be set. For example, you can set "
+              "the 'LD_LIBRARY_PATH' by adding: --extra_envs "
+              "LD_LIBRARY_PATH=/usr/local/cuda/lib64:$LD_LIBRARY_PATH"),
+    )
     args, udf_command = parser.parse_known_args()
 
     udf_command = str(udf_command[0])
-    if "python3" not in udf_command:
+    if "python" not in udf_command:
         raise RuntimeError("Launching script does only support a Python "
                            "executable file")
     submit_all_jobs(args, udf_command)
