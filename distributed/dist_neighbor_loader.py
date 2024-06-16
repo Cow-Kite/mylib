@@ -4,7 +4,6 @@ import torch
 
 from torch_geometric.distributed import (
     DistContext,
-    DistLoader,
     DistNeighborSampler,
     LocalFeatureStore,
     LocalGraphStore,
@@ -14,7 +13,7 @@ from torch_geometric.sampler.base import SubgraphType
 from torch_geometric.typing import EdgeType, InputNodes, OptTensor
 
 
-class DistNeighborLoader(NodeLoader, DistLoader):
+class DistNeighborLoader(NodeLoader):
     r"""A distributed loader that performs sampling from nodes.
 
     Args:
@@ -25,13 +24,9 @@ class DistNeighborLoader(NodeLoader, DistLoader):
             If an entry is set to :obj:`-1`, all neighbors will be included.
             In heterogeneous graphs, may also take in a dictionary denoting
             the amount of neighbors to sample for each individual edge type.
-        master_addr (str): RPC address for distributed loader communication,
-            *i.e.* the IP address of the master node.
-        master_port (Union[int, str]): Open port for RPC communication with
-            the master node.
         current_ctx (DistContext): Distributed context information of the
             current process.
-        concurrency (int, optional): RPC concurrency used for defining the
+        concurrency (int, optional): Concurrency used for defining the
             maximum size of the asynchronous processing queue.
             (default: :obj:`1`)
 
@@ -42,8 +37,6 @@ class DistNeighborLoader(NodeLoader, DistLoader):
         self,
         data: Tuple[LocalFeatureStore, LocalGraphStore],
         num_neighbors: Union[List[int], Dict[EdgeType, List[int]]],
-        master_addr: str,
-        master_port: Union[int, str],
         current_ctx: DistContext,
         input_nodes: InputNodes = None,
         input_time: OptTensor = None,
@@ -55,7 +48,6 @@ class DistNeighborLoader(NodeLoader, DistLoader):
         time_attr: Optional[str] = None,
         transform: Optional[Callable] = None,
         concurrency: int = 1,
-        num_rpc_threads: int = 16,
         filter_per_worker: Optional[bool] = False,
         async_sampling: bool = True,
         device: Optional[torch.device] = None,
@@ -63,7 +55,7 @@ class DistNeighborLoader(NodeLoader, DistLoader):
     ):
         assert isinstance(data[0], LocalFeatureStore)
         assert isinstance(data[1], LocalGraphStore)
-        assert concurrency >= 1, "RPC concurrency must be greater than 1"
+        assert concurrency >= 1, "Concurrency must be greater than 1"
 
         if input_time is not None and time_attr is None:
             raise ValueError("Received conflicting 'input_time' and "
@@ -87,16 +79,6 @@ class DistNeighborLoader(NodeLoader, DistLoader):
                 concurrency=concurrency,
             )
 
-        DistLoader.__init__(
-            self,
-            channel=channel,
-            master_addr=master_addr,
-            master_port=master_port,
-            current_ctx=current_ctx,
-            dist_sampler=dist_sampler,
-            num_rpc_threads=num_rpc_threads,
-            **kwargs,
-        )
         NodeLoader.__init__(
             self,
             data=data,
@@ -111,4 +93,4 @@ class DistNeighborLoader(NodeLoader, DistLoader):
         )
 
     def __repr__(self) -> str:
-        return DistLoader.__repr__(self)
+        return f'{self.__class__.__name__}(data={self.data})'

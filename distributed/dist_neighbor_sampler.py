@@ -17,7 +17,6 @@ from torch_geometric.distributed.event_loop import (
     ConcurrentEventLoop,
     to_asyncio_future,
 )
-
 from torch_geometric.distributed.utils import (
     BatchDict,
     DistEdgeHeteroSamplerInput,
@@ -759,77 +758,6 @@ class DistNeighborSampler:
 
         return outputs[p_id]
 
-    def _merge_sampler_outputs(
-        self,
-        partition_ids: Tensor,
-        partition_orders: Tensor,
-        outputs: List[SamplerOutput],
-        one_hop_num: int,
-        src_batch: Optional[Tensor] = None,
-    ) -> SamplerOutput:
-        r"""Merges samplers outputs from different partitions, so that they
-        are sorted according to the sampling order. Removes seed nodes from
-        sampled nodes and calculates how many neighbors were sampled by each
-        src node based on the :obj:`cumsum_neighbors_per_node`. Leverages the
-        :obj:`pyg-lib` :meth:`merge_sampler_outputs` function.
-
-        Args:
-            partition_ids (torch.Tensor): Contains information on which
-                partition seeds nodes are located on.
-            partition_orders (torch.Tensor): Contains information about the
-                order of seed nodes in each partition.
-            outputs (List[SamplerOutput]): List of all samplers outputs.
-            one_hop_num (int): Max number of neighbors sampled in the current
-                layer.
-            src_batch (torch.Tensor, optional): The batch assignment of seed
-                nodes. (default: :obj:`None`)
-
-        Returns :obj:`SamplerOutput` containing all merged outputs.
-        """
-        sampled_nodes_with_dupl = [
-            o.node if o is not None else torch.empty(0, dtype=torch.int64)
-            for o in outputs
-        ]
-        edge_ids = [
-            o.edge if o is not None else torch.empty(0, dtype=torch.int64)
-            for o in outputs
-        ]
-        cumm_sampled_nbrs_per_node = [
-            o.metadata[0] if o is not None else [] for o in outputs
-        ]
-
-        partition_ids = partition_ids.tolist()
-        partition_orders = partition_orders.tolist()
-
-        partitions_num = self.graph_store.meta["num_parts"]
-
-        out = torch.ops.pyg.merge_sampler_outputs(
-            sampled_nodes_with_dupl,
-            edge_ids,
-            cumm_sampled_nbrs_per_node,
-            partition_ids,
-            partition_orders,
-            partitions_num,
-            one_hop_num,
-            src_batch,
-            self.disjoint,
-        )
-        (
-            out_node_with_dupl,
-            out_edge,
-            out_batch,
-            out_sampled_nbrs_per_node,
-        ) = out
-
-        return SamplerOutput(
-            out_node_with_dupl,
-            None,
-            None,
-            out_edge,
-            out_batch if self.disjoint else None,
-            metadata=(out_sampled_nbrs_per_node, ),
-        )
-
     async def sample_one_hop(
         self,
         srcs: Tensor,
@@ -839,61 +767,9 @@ class DistNeighborSampler:
         edge_type: Optional[EdgeType] = None,
     ) -> SamplerOutput:
         r"""Samples one-hop neighbors for a set of seed nodes in :obj:`srcs`.
-        If seed nodes are located on a local partition, evaluates the sampling
-        function on the current machine. If seed nodes are from a remote
-        partition, sends a request to a remote machine that contains this
-        partition.
         """
-        src_node_type = None if not self.is_hetero else edge_type[2]
-        partition_ids = self.graph_store.get_partition_ids_from_nids(
-            srcs, src_node_type)
-        partition_orders = torch.zeros(len(partition_ids), dtype=torch.long)
-
-        p_outputs: List[SamplerOutput] = [
-            None
-        ] * self.graph_store.meta["num_parts"]
-        futs: List[torch.futures.Future] = []
-
-        local_only = True
-        single_partition = len(set(partition_ids.tolist())) == 1
-
-        for i in range(self.graph_store.num_partitions):
-            p_id = (self.graph_store.partition_idx +
-                    i) % self.graph_store.num_partitions
-            p_mask = partition_ids == p_id
-            p_srcs = torch.masked_select(srcs, p_mask)
-            p_seed_time = (torch.masked_select(seed_time, p_mask)
-                           if self.temporal else None)
-
-            p_indices = torch.arange(len(p_srcs), dtype=torch.long)
-            partition_orders[p_mask] = p_indices
-
-            if p_srcs.shape[0] > 0:
-                if p_id == self.graph_store.partition_idx:
-                    # Sample for one hop on a local machine:
-                    p_nbr_out = self._sample_one_hop(p_srcs, one_hop_num,
-                                                     p_seed_time, edge_type)
-                    p_outputs.pop(p_id)
-                    p_outputs.insert(p_id, p_nbr_out)
-
-
-        if not local_only:
-            # Src nodes are remote
-            res_fut_list = await to_asyncio_future(
-                torch.futures.collect_all(futs))
-            for i, res_fut in enumerate(res_fut_list):
-                p_id = (self.graph_store.partition_idx + i +
-                        1) % self.graph_store.num_partitions
-                p_outputs.pop(p_id)
-                p_outputs.insert(p_id, res_fut.wait())
-
-        # All src nodes are in the same partition
-        if single_partition:
-            return self._get_sampler_output(p_outputs, len(srcs),
-                                            partition_ids[0], src_batch)
-
-        return self._merge_sampler_outputs(partition_ids, partition_orders,
-                                           p_outputs, one_hop_num, src_batch)
+        out = self._sample_one_hop(srcs, one_hop_num, seed_time, edge_type)
+        return self._get_sampler_output([out], len(srcs), 0, src_batch)
 
     def _sample_one_hop(
         self,

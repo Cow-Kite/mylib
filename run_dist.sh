@@ -14,7 +14,7 @@ NUM_NODES=2 # 사용할 노드 수
 
 DATASET=ogbn-products # 사용할 데이터셋
 
-DATASET_ROOT_DIR="./data/partitions/${DATASET}/${NUM_NODES}=parts" # 데이터셋의 루트 디렉토리 설정
+DATASET_ROOT_DIR="./data/partitions/${DATASET}/${NUM_NODES}-parts" # 데이터셋의 루트 디렉토리 설정
 
 IP_CONFIG=${PYG_WORKSPACE}/ip_config.yaml # IP 설정 파일의 경로를 설정
 

@@ -1,10 +1,8 @@
 from dataclasses import dataclass
 from enum import Enum
 
-
 class DistRole(Enum):
     WORKER = 1
-
 
 @dataclass
 class DistContext:
