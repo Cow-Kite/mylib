@@ -120,14 +120,15 @@ def run_proc(
             f'{dataset}-test-partitions',
             f'partition{node_rank}.pt',
         ))
-    
+
     if is_hetero:
         train_idx = ('paper', train_idx)
         test_idx = ('paper', test_idx)
 
-    # Load partition into local graph/feature store:
+    # Load partition into local graph store:
     graph = LocalGraphStore.from_partition(
         osp.join(root_dir, f'{dataset}-partitions'), node_rank)
+    # Load partition into local feature store:
     feature = LocalFeatureStore.from_partition(
         osp.join(root_dir, f'{dataset}-partitions'), node_rank)
     feature.labels = torch.load(node_label_file)
@@ -162,13 +163,13 @@ def run_proc(
         num_neighbors=num_neighbors,
         shuffle=True,
         drop_last=True,
-        persistent_workers=num_workers,
+        persistent_workers=num_workers > 0,
         batch_size=batch_size,
         num_workers=num_workers,
         master_addr=master_addr,
         master_port=train_loader_port,
     )
-
+        
     print('--- Initialize model ...')
     model = GraphSAGE(
         in_channels=128 if is_hetero else 100,

@@ -2,8 +2,9 @@ from typing import Callable, Dict, List, Optional, Tuple, Union
 
 import torch
 
-from torch_geometric.distributed import (
+from distributed import (
     DistContext,
+    DistLoader,
     DistNeighborSampler,
     LocalFeatureStore,
     LocalGraphStore,
@@ -16,7 +17,8 @@ from torch_geometric.typing import EdgeType, InputNodes, OptTensor
 class DistNeighborLoader(NodeLoader):
     r"""A distributed loader that performs sampling from nodes.
 
-    Args:
+    Args
+    
         data (tuple): A (:class:`~torch_geometric.data.FeatureStore`,
             :class:`~torch_geometric.data.GraphStore`) data object.
         num_neighbors (List[int] or Dict[Tuple[str, str, str], List[int]]):
@@ -79,6 +81,14 @@ class DistNeighborLoader(NodeLoader):
                 concurrency=concurrency,
             )
 
+        DistLoader.__init__(
+            self,
+            channel=channel,
+            current_ctx=current_ctx,
+            dist_sampler=dist_sampler,
+            **kwargs,
+        )
+
         NodeLoader.__init__(
             self,
             data=data,
@@ -93,4 +103,4 @@ class DistNeighborLoader(NodeLoader):
         )
 
     def __repr__(self) -> str:
-        return f'{self.__class__.__name__}(data={self.data})'
+        return DistLoader.__repr__(self)

@@ -8,7 +8,7 @@ import torch
 import torch.multiprocessing as mp
 from torch import Tensor
 
-from torch_geometric.distributed import (
+from distributed import (
     DistContext,
     LocalFeatureStore,
     LocalGraphStore,

@@ -1,13 +1,14 @@
 import atexit
 import logging
 import os
+import torch
 from typing import Any, Optional, Union
 
-import torch.distributed
+import distributed
 import torch.multiprocessing as mp
 
-from torch_geometric.distributed import DistNeighborSampler
-from torch_geometric.distributed.dist_context import DistContext
+from distributed import DistNeighborSampler
+from distributed.dist_context import DistContext
 from torch_geometric.loader.base import DataLoaderIterator
 
 
