@@ -13,11 +13,11 @@ from distributed import (
     LocalFeatureStore,
     LocalGraphStore,
 )
-from torch_geometric.distributed.event_loop import (
+from distributed.event_loop import (
     ConcurrentEventLoop,
     to_asyncio_future,
 )
-from torch_geometric.distributed.utils import (
+from distributed.utils import (
     BatchDict,
     DistEdgeHeteroSamplerInput,
     NodeDict,

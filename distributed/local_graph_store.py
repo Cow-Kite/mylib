@@ -83,18 +83,18 @@ class LocalGraphStore(GraphStore):
     def get_all_edge_attrs(self) -> List[EdgeAttr]: # 모든 엣지 속성을 반환
         return [self._edge_attr[key] for key in self._edge_index.keys()]
 
-    def get_connected_nodes(self, node_id: int) -> List[int]:
-        r"""Returns the nodes connected to the given node ID."""
-        connected_nodes = set()
-        for edge_index in self._edge_index.values():
-            src, dst = edge_index
-            if node_id in src:
-                indices = (src == node_id).nonzero(as_tuple=True)[0]
-                connected_nodes.update(dst[indices].tolist())
-            if node_id in dst:
-                indices = (dst == node_id).nonzero(as_tuple=True)[0]
-                connected_nodes.update(src[indices].tolist())
-        return list(connected_nodes)   
+    # def get_connected_nodes(self, node_id: int) -> List[int]:
+    #     r"""Returns the nodes connected to the given node ID."""
+    #     connected_nodes = set()
+    #     for edge_index in self._edge_index.values():
+    #         src, dst = edge_index
+    #         if node_id in src:
+    #             indices = (src == node_id).nonzero(as_tuple=True)[0]
+    #             connected_nodes.update(dst[indices].tolist())
+    #         if node_id in dst:
+    #             indices = (dst == node_id).nonzero(as_tuple=True)[0]
+    #             connected_nodes.update(src[indices].tolist())
+    #     return list(connected_nodes)   
 
     # Initialization ##########################################################
 

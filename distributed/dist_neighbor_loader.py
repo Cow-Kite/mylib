@@ -14,7 +14,7 @@ from torch_geometric.sampler.base import SubgraphType
 from torch_geometric.typing import EdgeType, InputNodes, OptTensor
 
 
-class DistNeighborLoader(NodeLoader):
+class DistNeighborLoader(NodeLoader, DistLoader):
     r"""A distributed loader that performs sampling from nodes.
 
     Args
@@ -39,6 +39,8 @@ class DistNeighborLoader(NodeLoader):
         self,
         data: Tuple[LocalFeatureStore, LocalGraphStore],
         num_neighbors: Union[List[int], Dict[EdgeType, List[int]]],
+        master_addr: str,
+        master_port: Union[int, str],
         current_ctx: DistContext,
         input_nodes: InputNodes = None,
         input_time: OptTensor = None,
@@ -84,6 +86,8 @@ class DistNeighborLoader(NodeLoader):
         DistLoader.__init__(
             self,
             channel=channel,
+            master_addr=master_addr,
+            master_port=master_port,
             current_ctx=current_ctx,
             dist_sampler=dist_sampler,
             **kwargs,
